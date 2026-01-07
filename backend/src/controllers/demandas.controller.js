@@ -1,39 +1,24 @@
-import * as demandaService from "../services/demandas.service.js";
+import { DemandasService } from "../services/demandas.service.js";
 
-export async function listar(req, res) {
-  const { status } = req.query;
-  const demandas = await demandaService.listarDemandas(status);
+const service = new DemandasService();
+
+export async function listarDemandas(req, res) {
+  const demandas = await service.listar();
   res.json(demandas);
 }
 
-export async function criar(req, res) {
-  const demanda = await demandaService.criarDemanda(req.body);
+export async function criarDemanda(req, res) {
+  const { titulo, descricao, tipo } = req.body;
+
+  if (!titulo || !tipo) {
+    return res.status(400).json({ erro: "Título e tipo são obrigatórios" });
+  }
+
+  const demanda = await service.criar({
+    titulo,
+    descricao,
+    tipo,
+  });
+
   res.status(201).json(demanda);
-}
-
-export async function assumir(req, res) {
-  try {
-    const { id } = req.params;
-    const { analistaId } = req.body;
-
-    const demanda = await demandaService.assumirDemanda(
-      Number(id),
-      Number(analistaId)
-    );
-
-    res.json(demanda);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-}
-
-export async function finalizar(req, res) {
-  try {
-    const { id } = req.params;
-
-    const demanda = await demandaService.finalizarDemanda(Number(id));
-    res.json(demanda);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
 }

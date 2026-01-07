@@ -1,39 +1,42 @@
-import { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import { useEffect, useState } from "react";
+import { api } from "../../services/api";
+import DemandaForm from "./DemandaForm";
 
 export default function KanbanBoard() {
   const [demandas, setDemandas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [erro, setErro] = useState(null);
 
-  useEffect(() => {
-    async function carregarDemandas() {
-      try {
-        const response = await api.get('/demandas');
-        setDemandas(response.data);
-      } catch (err) {
-        console.error(err);
-        setError('Erro ao carregar demandas');
-      } finally {
-        setLoading(false);
-      }
+  // ✅ Função isolada para buscar demandas
+  async function carregarDemandas() {
+    try {
+      const response = await api.get("/demandas");
+      setDemandas(response.data);
+    } catch (error) {
+      setErro("Erro ao carregar demandas");
+      console.error(error);
     }
+  }
 
+  // ✅ Executa apenas UMA vez quando o componente monta
+  useEffect(() => {
     carregarDemandas();
   }, []);
 
-  if (loading) return <p>Carregando demandas...</p>;
-  if (error) return <p>{error}</p>;
-
-  const todo = demandas.filter(d => d.status === 'TODO');
-  const doing = demandas.filter(d => d.status === 'DOING');
-  const done = demandas.filter(d => d.status === 'DONE');
+  // ✅ Separação por status
+  const todo = demandas.filter(d => d.status === "TODO");
+  const doing = demandas.filter(d => d.status === "DOING");
+  const done = demandas.filter(d => d.status === "DONE");
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: "20px" }}>
       <h1>Kanban TI</h1>
 
-      <div style={{ display: 'flex', gap: '20px' }}>
+      {/* Formulário */}
+      <DemandaForm onNovaDemanda={carregarDemandas} />
+
+      {erro && <p style={{ color: "red" }}>{erro}</p>}
+
+      <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
         <Coluna titulo="TODO" demandas={todo} />
         <Coluna titulo="DOING" demandas={doing} />
         <Coluna titulo="DONE" demandas={done} />
@@ -46,11 +49,11 @@ function Coluna({ titulo, demandas }) {
   return (
     <div
       style={{
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        padding: '10px',
-        width: '300px',
-        minHeight: '300px',
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        padding: "10px",
+        width: "300px",
+        minHeight: "300px",
       }}
     >
       <h2>{titulo}</h2>
@@ -61,10 +64,10 @@ function Coluna({ titulo, demandas }) {
         <div
           key={demanda.id}
           style={{
-            border: '1px solid #999',
-            borderRadius: '6px',
-            padding: '8px',
-            marginBottom: '8px',
+            border: "1px solid #999",
+            borderRadius: "6px",
+            padding: "8px",
+            marginBottom: "8px",
           }}
         >
           <strong>{demanda.titulo}</strong>
