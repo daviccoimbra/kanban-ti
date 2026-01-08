@@ -6,7 +6,7 @@ export default function KanbanBoard() {
   const [demandas, setDemandas] = useState([]);
   const [erro, setErro] = useState(null);
 
-  // ✅ Função isolada para buscar demandas
+  // Buscar demandas
   async function carregarDemandas() {
     try {
       const response = await api.get("/demandas");
@@ -17,50 +17,64 @@ export default function KanbanBoard() {
     }
   }
 
-  // ✅ Executa apenas UMA vez quando o componente monta
+  // Mover demanda
+  async function moverDemanda(id, novoStatus) {
+    try {
+      await api.patch(`/demandas/${id}/status`, {
+        status: novoStatus,
+      });
+      carregarDemandas();
+    } catch (error) {
+      console.error(error);
+      setErro("Erro ao mover demanda");
+    }
+  }
+
+  // Executa apenas uma vez
   useEffect(() => {
     carregarDemandas();
   }, []);
 
-  // ✅ Separação por status
-  const todo = demandas.filter(d => d.status === "TODO");
-  const doing = demandas.filter(d => d.status === "DOING");
-  const done = demandas.filter(d => d.status === "DONE");
+  // Separação por status
+  const todo = demandas.filter((d) => d.status === "TODO");
+  const doing = demandas.filter((d) => d.status === "DOING");
+  const done = demandas.filter((d) => d.status === "DONE");
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Kanban TI</h1>
 
-      {/* Formulário */}
       <DemandaForm onNovaDemanda={carregarDemandas} />
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
 
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-        <Coluna titulo="TODO" demandas={todo} />
-        <Coluna titulo="DOING" demandas={doing} />
-        <Coluna titulo="DONE" demandas={done} />
+        <Coluna
+          titulo="TODO"
+          demandas={todo}
+          moverDemanda={moverDemanda}
+        />
+        <Coluna
+          titulo="DOING"
+          demandas={doing}
+          moverDemanda={moverDemanda}
+        />
+        <Coluna
+          titulo="DONE"
+          demandas={done}
+          moverDemanda={moverDemanda}
+        />
       </div>
     </div>
   );
 }
 
-function Coluna({ titulo, demandas }) {
+function Coluna({ titulo, demandas, moverDemanda }) {
   return (
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "10px",
-        width: "300px",
-        minHeight: "300px",
-      }}
-    >
+    <div style={{ width: "30%" }}>
       <h2>{titulo}</h2>
 
-      {demandas.length === 0 && <p>Nenhuma demanda</p>}
-
-      {demandas.map(demanda => (
+      {demandas.map((demanda) => (
         <div
           key={demanda.id}
           style={{
@@ -73,6 +87,37 @@ function Coluna({ titulo, demandas }) {
           <strong>{demanda.titulo}</strong>
           <p>{demanda.descricao}</p>
           <small>Tipo: {demanda.tipo}</small>
+
+          <div style={{ marginTop: "8px" }}>
+            {/* Voltar */}
+            {demanda.status !== "TODO" && (
+              <button
+                onClick={() =>
+                  moverDemanda(
+                    demanda.id,
+                    demanda.status === "DOING" ? "TODO" : "DOING"
+                  )
+                }
+              >
+                ◀️ Voltar
+              </button>
+            )}
+
+            {/* Avançar */}
+            {demanda.status !== "DONE" && (
+              <button
+                style={{ marginLeft: "8px" }}
+                onClick={() =>
+                  moverDemanda(
+                    demanda.id,
+                    demanda.status === "TODO" ? "DOING" : "DONE"
+                  )
+                }
+              >
+                ▶️ Avançar
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>

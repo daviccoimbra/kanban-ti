@@ -1,24 +1,63 @@
-import { DemandasService } from "../services/demandas.service.js";
+import * as demandasService from "../services/demandas.service.js";
 
-const service = new DemandasService();
-
+// GET /demandas
 export async function listarDemandas(req, res) {
-  const demandas = await service.listar();
-  res.json(demandas);
+  try {
+    const demandas = await demandasService.listarDemandas();
+    return res.json(demandas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erro ao listar demandas" });
+  }
 }
 
+// POST /demandas
 export async function criarDemanda(req, res) {
-  const { titulo, descricao, tipo } = req.body;
+  try {
+    const { titulo, descricao, tipo } = req.body;
 
-  if (!titulo || !tipo) {
-    return res.status(400).json({ erro: "Título e tipo são obrigatórios" });
+    if (!titulo || !descricao || !tipo) {
+      return res.status(400).json({
+        error: "Título, descrição e tipo são obrigatórios",
+      });
+    }
+
+    const novaDemanda = await demandasService.criarDemanda({
+      titulo,
+      descricao,
+      tipo,
+    });
+
+    return res.status(201).json(novaDemanda);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erro ao criar demanda" });
   }
+}
 
-  const demanda = await service.criar({
-    titulo,
-    descricao,
-    tipo,
-  });
+// PATCH /demandas/:id/status
+export async function atualizarStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-  res.status(201).json(demanda);
+    if (!status) {
+      return res.status(400).json({ error: "Status é obrigatório" });
+    }
+
+    const statusValidos = ["TODO", "DOING", "DONE"];
+    if (!statusValidos.includes(status)) {
+      return res.status(400).json({ error: "Status inválido" });
+    }
+
+    const demandaAtualizada = await demandasService.atualizarStatus(
+      Number(id),
+      status
+    );
+
+    return res.json(demandaAtualizada);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erro ao atualizar status" });
+  }
 }
